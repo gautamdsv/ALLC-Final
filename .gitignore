@@ -1,0 +1,45 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+
+# env files
+.env
+backend/.env
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE / editor configs
+.vscode/
+.idea/
+
+# AI agent configs (not part of source)
+.claude/
+.cursor/
+.agents/
+.code-review-graph/
+.copilot-agent.md
+.cursorrules
+.windsurfrules
+.mcp.json
+.opencode.json
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+
+# project management docs (internal only)
+DELIVERY_COMPARISON.md
+DEPLOYMENT_WORKFLOW.md
+MOBILE_RESPONSIVENESS_AUDIT.md
+WEBSITE_COMPLETENESS_CHECKLIST.md
+docs/checklists/
+docs/ideas/
+docs/plans/
+docs/ADMIN_AUTH_BACKEND_IMPLEMENTATION.md
+.github/agents/
+
+# test artifacts
+backend/test-email.json
