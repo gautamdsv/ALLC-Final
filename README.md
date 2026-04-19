@@ -215,7 +215,27 @@ npm test
 
 3. **Backend CORS** → Set `CORS_ORIGIN` to your frontend domain
 
-4. **Email** → Verify `asianllc.com` domain at resend.com before production emails will deliver
+4. **Email (Resend)** → Domain verification required before production emails will deliver (see below)
+
+## Resend Domain Verification
+
+Emails (password reset, waitlist acceptance/rejection, clinic notifications) are sent via [Resend](https://resend.com). In development, Resend delivers to any address from `onboarding@resend.dev`. In production, you must verify the `asianllc.com` domain.
+
+### Steps to verify
+1. Log into [resend.com/domains](https://resend.com/domains)
+2. Click **Add Domain** → enter `asianllc.com`
+3. Resend will show **3 DNS records** you need to add:
+   - **MX record** — for receiving bounce notifications
+   - **TXT record** (SPF) — authorizes Resend to send on your behalf
+   - **CNAME record** (DKIM) — cryptographic email signing
+4. Go to your domain registrar (GoDaddy, Namecheap, Cloudflare, etc.) and add all 3 records
+5. Back in Resend, click **Verify** — it can take up to 72 hours for DNS to propagate, but usually works within 10-30 minutes
+6. Once verified, update `RESEND_FROM_EMAIL` in your backend `.env` to use `noreply@asianllc.com` (or any address on that domain)
+
+### Current status
+- `RESEND_API_KEY` is set in `.env` and works for dev/testing
+- `RESEND_FROM_EMAIL` is set to `ALLC Clinic <noreply@asianllc.com>` but will bounce until the domain is verified
+- The backend code in `backend/src/utils/email.js` is production-ready and doesn't need changes
 
 ## For the Next Developer
 
@@ -235,4 +255,5 @@ The primary task ahead is **payment gateway integration**. Here's what you need 
 ### Things still needed
 - **Payment gateway**: Routes, webhooks, subscription management
 - **Blog images**: Currently URL-only. Consider adding Supabase Storage or Cloudinary for uploads
-- **Email domain**: Verify `asianllc.com` at resend.com for production delivery
+- **Resend domain**: Follow the steps in the "Resend Domain Verification" section above
+
