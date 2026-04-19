@@ -1,6 +1,143 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 
+/* ── Extracted sub-components so hooks are called at the top level ── */
+
+const DesktopTimelineNode = ({ nodeProgress, index, colors }) => {
+  const isActiveState = useTransform(nodeProgress, (p) => {
+    const dist = Math.abs(p - index);
+    return dist < 0.5 ? 1 : 0;
+  });
+
+  const dotColor = useTransform(isActiveState, (active) => active ? colors.accent : "transparent");
+  const borderColor = useTransform(isActiveState, (active) => active ? colors.accent : "rgba(8, 28, 21, 0.15)");
+  const scale = useTransform(isActiveState, (active) => active ? 1.5 : 1);
+
+  return (
+    <div className="relative z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white transition-shadow shadow-sm" style={{ border: 'none' }}>
+      <motion.div
+        className="w-5 h-5 rounded-full border-[3px]"
+        style={{ backgroundColor: dotColor, borderColor, scale }}
+        transition={{ duration: 0.3 }}
+      />
+    </div>
+  );
+};
+
+const DesktopContentCard = ({ item, index, nodeProgress, colors, animationYOffset, nodeIconBottomMargin, nodeTagBottomMargin, nodeTitleBottomMargin }) => {
+  const itemOpacity = useTransform(nodeProgress, (p) => {
+    const diff = Math.abs(p - index);
+    return Math.max(1 - (diff * 1.5), 0);
+  });
+
+  const y = useTransform(nodeProgress, (p) => {
+    const diff = p - index;
+    return diff * animationYOffset;
+  });
+
+  const pointerEvents = useTransform(itemOpacity, (o) => o > 0.5 ? 'auto' : 'none');
+
+  return (
+    <motion.div
+      className="absolute inset-0 flex flex-col justify-center items-start pt-10 px-4 md:px-0"
+      style={{ opacity: itemOpacity, y, pointerEvents }}
+    >
+      <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-[1.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.1)] shrink-0" style={{ backgroundColor: item.iconBg, color: item.iconColor, marginBottom: nodeIconBottomMargin }}>
+        {item.icon}
+      </div>
+      <div className="inline-block px-4 py-1.5 rounded-full border border-[rgba(8,28,21,0.1)]" style={{ marginBottom: nodeTagBottomMargin }}>
+        <p className="text-xs md:text-sm font-bold tracking-[0.2em] uppercase" style={{ color: colors.accent }}>Cornerstone 0{index + 1}</p>
+      </div>
+      <h3 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-serif font-bold leading-[1.1]" style={{ color: colors.primary, marginBottom: nodeTitleBottomMargin }}>{item.title}</h3>
+      <p className="text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed" style={{ color: colors.mutedText }}>
+        {item.description}
+      </p>
+    </motion.div>
+  );
+};
+
+const MobileTimelineNode = ({ nodeProgress, index, colors }) => {
+  const isActiveState = useTransform(nodeProgress, (p) => {
+    const dist = Math.abs(p - index);
+    return dist < 0.5 ? 1 : 0;
+  });
+
+  const dotColor = useTransform(isActiveState, (active) => active ? colors.accent : "transparent");
+  const borderColor = useTransform(isActiveState, (active) => active ? colors.accent : "rgba(8, 28, 21, 0.15)");
+  const scale = useTransform(isActiveState, (active) => active ? 1.3 : 1);
+
+  return (
+    <div className="relative z-10 w-8 h-8 flex items-center justify-center rounded-full transition-shadow shadow-sm" style={{ backgroundColor: colors.bgAlt }}>
+      <motion.div
+        className="w-4 h-4 rounded-full border-[2.5px]"
+        style={{ backgroundColor: dotColor, borderColor, scale }}
+        transition={{ duration: 0.3 }}
+      />
+    </div>
+  );
+};
+
+const MobileContentCard = ({ item, index, nodeProgress, colors, nodeIconBottomMargin, nodeTagBottomMargin, nodeTitleBottomMargin }) => {
+  const itemOpacity = useTransform(nodeProgress, (p) => {
+    const diff = Math.abs(p - index);
+    return Math.max(1 - (diff * 2), 0);
+  });
+
+  const y = useTransform(nodeProgress, (p) => {
+    const diff = p - index;
+    return diff * -40;
+  });
+
+  const pointerEvents = useTransform(itemOpacity, (o) => o > 0.5 ? 'auto' : 'none');
+
+  return (
+    <motion.div
+      className="absolute inset-0 flex flex-col justify-start items-start pt-4"
+      style={{ opacity: itemOpacity, y, pointerEvents }}
+    >
+      <div className="w-14 h-14 flex items-center justify-center rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] shrink-0" style={{ backgroundColor: item.iconBg, color: item.iconColor, marginBottom: nodeIconBottomMargin }}>
+        {item.icon}
+      </div>
+      <div className="inline-block px-3 py-1 rounded-full border border-[rgba(8,28,21,0.1)]" style={{ marginBottom: nodeTagBottomMargin }}>
+        <p className="text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase" style={{ color: colors.accent }}>Cornerstone 0{index + 1}</p>
+      </div>
+      <h3 className="text-2xl sm:text-3xl font-serif font-bold leading-[1.1]" style={{ color: colors.primary, marginBottom: nodeTitleBottomMargin }}>{item.title}</h3>
+      <p className="text-base sm:text-lg leading-relaxed" style={{ color: colors.mutedText }}>
+        {item.description}
+      </p>
+    </motion.div>
+  );
+};
+
+const DesktopProgressBar = ({ nodeProgress, itemsLength, colors }) => {
+  const scaleY = useTransform(nodeProgress, [0, itemsLength - 1], [0, 1]);
+  return (
+    <motion.div
+      className="absolute top-[5%] w-1 rounded-full origin-top"
+      style={{
+        backgroundColor: colors.accent,
+        height: "90%",
+        scaleY
+      }}
+    />
+  );
+};
+
+const MobileProgressBar = ({ nodeProgress, itemsLength, colors }) => {
+  const scaleX = useTransform(nodeProgress, [0, itemsLength - 1], [0, 1]);
+  return (
+    <motion.div
+      className="absolute top-1/2 -translate-y-1/2 left-[2%] right-[2%] h-[2px] rounded-full origin-left"
+      style={{
+        backgroundColor: colors.accent,
+        scaleX
+      }}
+    />
+  );
+};
+
+/* ── Main Desktop component ── */
+
 const DesktopTimelineFeatures = ({
   items,
   colors,
@@ -74,79 +211,38 @@ const DesktopTimelineFeatures = ({
         >
           <div className="absolute top-[5%] bottom-[5%] w-1 rounded-full" style={{ backgroundColor: 'rgba(8, 28, 21, 0.05)' }} />
 
-          <motion.div
-            className="absolute top-[5%] w-1 rounded-full origin-top"
-            style={{
-              backgroundColor: colors.accent,
-              height: "90%",
-              scaleY: useTransform(nodeProgress, [0, items.length - 1], [0, 1])
-            }}
-          />
+          <DesktopProgressBar nodeProgress={nodeProgress} itemsLength={items.length} colors={colors} />
 
-          {items.map((item, i) => {
-            const isActiveState = useTransform(nodeProgress, (p) => {
-              const dist = Math.abs(p - i);
-              return dist < 0.5 ? 1 : 0;
-            });
-
-            const dotColor = useTransform(isActiveState, (active) => active ? colors.accent : "transparent");
-            const borderColor = useTransform(isActiveState, (active) => active ? colors.accent : "rgba(8, 28, 21, 0.15)");
-            const scale = useTransform(isActiveState, (active) => active ? 1.5 : 1);
-
-            return (
-              <div key={i} className="relative z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white transition-shadow shadow-sm" style={{ border: 'none' }}>
-                <motion.div
-                  className="w-5 h-5 rounded-full border-[3px]"
-                  style={{ backgroundColor: dotColor, borderColor, scale }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-            );
-          })}
+          {items.map((_, i) => (
+            <DesktopTimelineNode key={i} nodeProgress={nodeProgress} index={i} colors={colors} />
+          ))}
         </motion.div>
 
         <motion.div
           className="absolute left-[5%] sm:left-[8%] md:left-[10%] lg:left-[15%] top-1/2 -translate-y-1/2 w-[90%] sm:w-[85%] md:w-[45%] h-auto md:h-[60vh] flex flex-col justify-center z-30"
           style={{ opacity: contentOpacity }}
         >
-          {items.map((item, i) => {
-            const itemOpacity = useTransform(nodeProgress, (p) => {
-              const diff = Math.abs(p - i);
-              return Math.max(1 - (diff * 1.5), 0);
-            });
-
-            const y = useTransform(nodeProgress, (p) => {
-              const diff = p - i;
-              return diff * ANIMATION_Y_OFFSET;
-            });
-
-            const pointerEvents = useTransform(itemOpacity, (o) => o > 0.5 ? 'auto' : 'none');
-
-            return (
-              <motion.div
-                key={i}
-                className="absolute inset-0 flex flex-col justify-center items-start pt-10 px-4 md:px-0"
-                style={{ opacity: itemOpacity, y, pointerEvents }}
-              >
-                <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-[1.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.1)] shrink-0" style={{ backgroundColor: item.iconBg, color: item.iconColor, marginBottom: nodeIconBottomMargin }}>
-                  {item.icon}
-                </div>
-                <div className="inline-block px-4 py-1.5 rounded-full border border-[rgba(8,28,21,0.1)]" style={{ marginBottom: nodeTagBottomMargin }}>
-                  <p className="text-xs md:text-sm font-bold tracking-[0.2em] uppercase" style={{ color: colors.accent }}>Cornerstone 0{i + 1}</p>
-                </div>
-                <h3 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-serif font-bold leading-[1.1]" style={{ color: colors.primary, marginBottom: nodeTitleBottomMargin }}>{item.title}</h3>
-                <p className="text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed" style={{ color: colors.mutedText }}>
-                  {item.description}
-                </p>
-              </motion.div>
-            );
-          })}
+          {items.map((item, i) => (
+            <DesktopContentCard
+              key={i}
+              item={item}
+              index={i}
+              nodeProgress={nodeProgress}
+              colors={colors}
+              animationYOffset={ANIMATION_Y_OFFSET}
+              nodeIconBottomMargin={nodeIconBottomMargin}
+              nodeTagBottomMargin={nodeTagBottomMargin}
+              nodeTitleBottomMargin={nodeTitleBottomMargin}
+            />
+          ))}
         </motion.div>
 
       </div>
     </section>
   );
 };
+
+/* ── Main Mobile component ── */
 
 const MobileTimelineFeatures = ({
   items,
@@ -204,35 +300,12 @@ const MobileTimelineFeatures = ({
         >
           <div className="absolute top-1/2 -translate-y-1/2 left-[2%] right-[2%] h-[2px] rounded-full" style={{ backgroundColor: 'rgba(8, 28, 21, 0.08)' }} />
 
-          <motion.div
-            className="absolute top-1/2 -translate-y-1/2 left-[2%] right-[2%] h-[2px] rounded-full origin-left"
-            style={{
-              backgroundColor: colors.accent,
-              scaleX: useTransform(nodeProgress, [0, items.length - 1], [0, 1])
-            }}
-          />
+          <MobileProgressBar nodeProgress={nodeProgress} itemsLength={items.length} colors={colors} />
 
           <div className="w-full relative flex items-center justify-between">
-            {items.map((item, i) => {
-              const isActiveState = useTransform(nodeProgress, (p) => {
-                const dist = Math.abs(p - i);
-                return dist < 0.5 ? 1 : 0;
-              });
-
-              const dotColor = useTransform(isActiveState, (active) => active ? colors.accent : "transparent");
-              const borderColor = useTransform(isActiveState, (active) => active ? colors.accent : "rgba(8, 28, 21, 0.15)");
-              const scale = useTransform(isActiveState, (active) => active ? 1.3 : 1);
-
-              return (
-                <div key={i} className="relative z-10 w-8 h-8 flex items-center justify-center rounded-full transition-shadow shadow-sm" style={{ backgroundColor: colors.bgAlt }}>
-                  <motion.div
-                    className="w-4 h-4 rounded-full border-[2.5px]"
-                    style={{ backgroundColor: dotColor, borderColor, scale }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-              );
-            })}
+            {items.map((_, i) => (
+              <MobileTimelineNode key={i} nodeProgress={nodeProgress} index={i} colors={colors} />
+            ))}
           </div>
         </motion.div>
 
@@ -240,38 +313,18 @@ const MobileTimelineFeatures = ({
           className="relative w-full max-w-md flex-1 mt-12 z-30 flex flex-col"
           style={{ opacity: contentOpacity }}
         >
-          {items.map((item, i) => {
-            const itemOpacity = useTransform(nodeProgress, (p) => {
-              const diff = Math.abs(p - i);
-              return Math.max(1 - (diff * 2), 0);
-            });
-
-            const y = useTransform(nodeProgress, (p) => {
-              const diff = p - i;
-              return diff * -40;
-            });
-
-            const pointerEvents = useTransform(itemOpacity, (o) => o > 0.5 ? 'auto' : 'none');
-
-            return (
-              <motion.div
-                key={i}
-                className="absolute inset-0 flex flex-col justify-start items-start pt-4"
-                style={{ opacity: itemOpacity, y, pointerEvents }}
-              >
-                <div className="w-14 h-14 flex items-center justify-center rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] shrink-0" style={{ backgroundColor: item.iconBg, color: item.iconColor, marginBottom: nodeIconBottomMargin }}>
-                  {item.icon}
-                </div>
-                <div className="inline-block px-3 py-1 rounded-full border border-[rgba(8,28,21,0.1)]" style={{ marginBottom: nodeTagBottomMargin }}>
-                  <p className="text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase" style={{ color: colors.accent }}>Cornerstone 0{i + 1}</p>
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-serif font-bold leading-[1.1]" style={{ color: colors.primary, marginBottom: nodeTitleBottomMargin }}>{item.title}</h3>
-                <p className="text-base sm:text-lg leading-relaxed" style={{ color: colors.mutedText }}>
-                  {item.description}
-                </p>
-              </motion.div>
-            );
-          })}
+          {items.map((item, i) => (
+            <MobileContentCard
+              key={i}
+              item={item}
+              index={i}
+              nodeProgress={nodeProgress}
+              colors={colors}
+              nodeIconBottomMargin={nodeIconBottomMargin}
+              nodeTagBottomMargin={nodeTagBottomMargin}
+              nodeTitleBottomMargin={nodeTitleBottomMargin}
+            />
+          ))}
         </motion.div>
 
       </div>

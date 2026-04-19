@@ -24,7 +24,7 @@ export const AppleCardsCarousel = ({ items }) => {
     drag.current.startX = e.pageX - el.offsetLeft;
     drag.current.scrollLeft = el.scrollLeft;
     drag.current.lastX = e.pageX;
-    drag.current.lastTime = Date.now();
+    drag.current.lastTime = Date.now(); // eslint-disable-line react-hooks/purity
     drag.current.velocity = 0;
 
     el.style.cursor = "grabbing";
@@ -76,7 +76,7 @@ export const AppleCardsCarousel = ({ items }) => {
     drag.current.startX = e.touches[0].pageX - el.offsetLeft;
     drag.current.scrollLeft = el.scrollLeft;
     drag.current.lastX = e.touches[0].pageX;
-    drag.current.lastTime = Date.now();
+    drag.current.lastTime = Date.now(); // eslint-disable-line react-hooks/purity
     drag.current.velocity = 0;
 
     el.style.scrollSnapType = "none";

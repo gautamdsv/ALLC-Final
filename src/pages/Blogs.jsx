@@ -127,11 +127,23 @@ export default function Blogs() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    getPosts({ category: activeCategory === 'All' ? undefined : activeCategory })
-      .then((data) => setPosts(data.items || []))
-      .catch(() => setPosts([]))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    const fetchPosts = async () => {
+      try {
+        const data = await getPosts({ category: activeCategory === 'All' ? undefined : activeCategory });
+        if (!cancelled) {
+          setPosts(data.items || []);
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setPosts([]);
+          setLoading(false);
+        }
+      }
+    };
+    fetchPosts();
+    return () => { cancelled = true; };
   }, [activeCategory]);
 
   const filtered = posts;

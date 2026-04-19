@@ -33,14 +33,17 @@ export default function BlogPost() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    setPost(null);
-    setNotFound(false);
+    let cancelled = false;
     getPostById(id)
       .then((found) => {
+        if (cancelled) return;
         if (found) setPost(found);
         else setNotFound(true);
       })
-      .catch(() => setNotFound(true));
+      .catch(() => {
+        if (!cancelled) setNotFound(true);
+      });
+    return () => { cancelled = true; };
   }, [id]);
 
   if (notFound) {
